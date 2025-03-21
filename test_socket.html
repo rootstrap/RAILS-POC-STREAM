@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba de WebSocket en Rails</title>
+</head>
+<body>
+    <h2>Chat WebSocket Test</h2>
+    <div id="chat-box" style="border: 1px solid #ccc; padding: 10px; height: 200px; overflow-y: scroll;">
+        <p><i>Esperando mensajes...</i></p>
+    </div>
+    <input type="text" id="message-input" placeholder="Escribe una pregunta...">
+    <button onclick="sendQuestion()">Enviar Pregunta</button>
+
+    <script>
+        // 🔹 Hardcodear el chat_id (puedes cambiarlo si usas uno dinámico)
+        const chatId = "12345"; 
+        const socket = new WebSocket("ws://localhost:3000/cable");
+
+        let isSubscribed = false;
+
+        socket.onopen = function () {
+            console.log("✅ Connected to WebSocket");
+
+            const subscriptionMessage = JSON.stringify({
+                command: "subscribe",
+                identifier: JSON.stringify({ channel: "ChatChannel", chat_id: chatId })
+            });
+
+            socket.send(subscriptionMessage);
+        };
+
+        socket.onmessage = function (event) {
+            const data = JSON.parse(event.data);
+            console.log("🔹 Received data:", data);
+
+            if (data.type === "confirm_subscription") {
+                isSubscribed = true;
+                console.log("✅ Successfully subscribed to ChatChannel with chat_id:", chatId);
+            }
+
+            if (data.type === "ping") return; // Ignorar pings de ActionCable
+
+            if (data.message) {
+                document.getElementById("chat-box").innerHTML += `<p>${data.message.text}</p>`;
+            }
+        };
+
+        function sendQuestion() {
+            if (!isSubscribed) {
+                console.error("❌ Not subscribed yet! Try again.");
+                return;
+            }
+
+            const input = document.getElementById("message-input");
+            const question = input.value.trim();
+            if (!question) return alert("Please enter a question.");
+
+            const messageData = JSON.stringify({
+                command: "message",
+                identifier: JSON.stringify({ channel: "ChatChannel", chat_id: chatId }),
+                data: JSON.stringify({ action: "ask_question", question: question })
+            });
+
+            socket.send(messageData);
+            console.log("📤 Sending question:", question);
+            input.value = "";
+        }
+    </script>
+</body>
+</html>

@@ -12,7 +12,9 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1, defaults: { format: :json } do
       post 'streaming/ask', to: 'streaming#ask'
+      post 'websocket/ask', to: 'streaming_websocket#ask'  # Para WebSockets
       mount ActionCable.server => '/cable'
+      
       
       get :status, to: 'health#status'
       resources :impersonations, only: %i[create], constraints: Impersonation::EnabledConstraint.new

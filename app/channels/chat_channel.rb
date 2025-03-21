@@ -1,24 +1,31 @@
+# frozen_string_literal: true
+require_dependency 'gemini/streaming_websocket_service'
+
 class ChatChannel < ApplicationCable::Channel
-    def subscribed
-      # Conectamos el canal a un stream, en este caso, a un chat específico por ID
-      stream_from "chat_#{params[:chat_id]}"
-    end
-  
-    def unsubscribed
-      # Código para limpiar cuando el usuario se desconecte
-    end
-  
-    def ask_question(data)
-      # Aquí se procesará la pregunta que el cliente envíe
-      question = data['question']
+  def subscribed
+    chat_id = params[:chat_id]
+
+    if chat_id.present?
+      stream_from "chat_#{chat_id}"
+      Rails.logger.info "📡 Subscribed to ChatChannel for chat_id: #{chat_id}"
       
-      # Llamamos al servicio de Gemini para obtener la respuesta en streaming
-      service = Gemini::SimpleService.new(question)
-  
-      service.call do |event, parsed, raw|
-        # Transmitimos el evento al cliente en tiempo real a través de WebSocket
-        ActionCable.server.broadcast "chat_#{params[:chat_id]}", event
-      end
+      # ✅ Corrected: Ensure transmit takes a single argument
+      transmit({ type: "confirm_subscription", chat_id: chat_id })
+    else
+      reject
     end
   end
-  
+
+  def unsubscribed
+    Rails.logger.info "❌ Unsubscribed from ChatChannel"
+  end
+
+  def ask_question(data)
+    chat_id = params[:chat_id]
+    question = data['question']
+
+    Rails.logger.info "📩 Received question in ChatChannel: #{question}"
+
+    ::Gemini::StreamingWebsocketService.new(question, chat_id).call
+  end
+end
