@@ -26,6 +26,11 @@ class ChatChannel < ApplicationCable::Channel
 
     Rails.logger.info "📩 Received question in ChatChannel: #{question}"
 
-    ::Gemini::StreamingWebsocketService.new(question, chat_id).call
+    begin
+      ::Gemini::StreamingWebsocketService.new(question, chat_id).call
+    rescue StandardError => error
+      Rails.logger.error "Error processing question: #{error.message}"
+      ActionCable.server.broadcast("chat_#{chat_id}", { error: "Failed to process question" })
+    end
   end
 end

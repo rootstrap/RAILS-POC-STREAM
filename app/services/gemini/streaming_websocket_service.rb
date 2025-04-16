@@ -10,10 +10,16 @@ module Gemini
       def call
         client.stream_generate_content(generate_content_params, server_sent_events: true) do |event, _, _|
           text = event.dig('candidates', 0, 'content', 'parts', 0, 'text')
-          next if text.nil?
-  
+
+          if text.nil? || text.strip.empty?
+            Rails.logger.debug "Received empty response from Gemini"
+            next
+          end
+
           ActionCable.server.broadcast("chat_#{@chat_id}", { text: text })
         end
+
+        ActionCable.server.broadcast("chat_#{@chat_id}", { type: "done" })
       rescue Faraday::TooManyRequestsError
         ActionCable.server.broadcast("chat_#{@chat_id}", { error: "Too many requests" })
       rescue StandardError => e
@@ -23,7 +29,7 @@ module Gemini
       private
   
       def client
-        @client ||= Gemini.new(
+        Gemini.new(
           credentials: {
             service: 'generative-language-api',
             api_key: 'AIzaSyDjLw-ZaRIWvZdIciOJklLmd09JKwOkBoM'
