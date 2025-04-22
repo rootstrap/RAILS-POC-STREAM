@@ -7,7 +7,7 @@ module Gemini
     def call
       Thread.new do
         ActionCable.server.broadcast("chat_#{@chat_id}", { text: "chat_#{@chat_id} - WebSocket Mocked\n" })
-        story.each do |fragment|=
+        story.each do |fragment|
           ActionCable.server.broadcast("chat_#{@chat_id}", { text: fragment })
           sleep 0.5
         end
