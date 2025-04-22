@@ -5,7 +5,7 @@ module Gemini
       def initialize(question, chat_id)
         @question = question
         @chat_id = chat_id
-        @mocked = false
+        @mocked = true
       end
   
       def call

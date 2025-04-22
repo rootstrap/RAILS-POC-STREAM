@@ -6,11 +6,16 @@ module Gemini
     def initialize(characters, &block)
       @block = block
       @characters = characters
+      @mocked = false
     end
 
     def call
-      client.stream_generate_content(generate_content_params, server_sent_events: true) do |event, parsed, raw|
-        @block.call(event, parsed, raw)
+      if @mocked
+        Gemini::StreamingMockedServiceSse.new(@characters, &@block).call
+      else
+        client.stream_generate_content(generate_content_params, server_sent_events: true) do |event, parsed, raw|
+          @block.call(event, parsed, raw)
+        end
       end
     rescue Faraday::TooManyRequestsError
       raise TooManyRequestsError, 'Too many requests. Please try again later.'
@@ -50,5 +55,6 @@ module Gemini
         ]
       }
     end
+    
   end
 end
