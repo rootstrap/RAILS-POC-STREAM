@@ -5,9 +5,13 @@ module Gemini
       def initialize(question, chat_id)
         @question = question
         @chat_id = chat_id
+        @mocked = false
       end
   
       def call
+        return StreamingMockedService.new(@chat_id).call if @mocked
+
+        ActionCable.server.broadcast("chat_#{@chat_id}", { text: "chat_#{@chat_id} - WebSocket GEMINI\n" })
         client.stream_generate_content(generate_content_params, server_sent_events: true) do |event, _, _|
           text = event.dig('candidates', 0, 'content', 'parts', 0, 'text')
 
