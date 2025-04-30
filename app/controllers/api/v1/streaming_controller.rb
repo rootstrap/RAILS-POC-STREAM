@@ -6,7 +6,7 @@ module API
       skip_before_action :authenticate_user!
       skip_after_action :verify_authorized
 
-      CHARACTERS = 1000
+      CHARACTERS = 4000
       STREAM_DELAY = 0.01 # Configuración del delay entre caracteres
       USE_SLOW_MODE = true # Si es `true`, envía letra por letra con delay. Si es `false`, envía como viene del servicio.
 

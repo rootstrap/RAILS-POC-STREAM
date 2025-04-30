@@ -6,7 +6,7 @@ module Gemini
     def initialize(characters, &block)
       @block = block
       @characters = characters
-      @mocked = false
+      @mocked = true
     end
 
     def call

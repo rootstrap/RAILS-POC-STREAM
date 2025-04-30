@@ -1,6 +1,6 @@
 module Gemini
   class StreamingMockedServiceSse
-    def initialize(characters = 1000, &block)
+    def initialize(characters = 4000, &block)
       @block = block
       @characters = characters
     end
@@ -13,7 +13,7 @@ module Gemini
           @block.call({ 'text' => "Iniciando simulación de SSE..." }, nil, nil)
 
           # Emite los fragmentos de la historia
-          story.each do |fragment|
+          full_story.each do |fragment|
             # Emite cada fragmento
             @block.call(mock_event(fragment), nil, nil)
             sleep 0.3
@@ -45,11 +45,6 @@ module Gemini
           }
         ]
       }
-    end
-
-    def story
-      # Limita la longitud de la historia si es necesario
-      full_story.first(@characters / 20) # Aproximando a 20 caracteres por fragmento
     end
 
     def full_story
